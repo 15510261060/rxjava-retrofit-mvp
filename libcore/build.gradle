@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "28.0.0"
+
+
+    defaultConfig {
+        minSdkVersion
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    //RxJava2.0所需依赖
+    compile 'io.reactivex:rxjava:1.2.9'
+    //Rxandroid2.0线程调度依赖
+    compile 'io.reactivex:rxandroid:1.2.1'
+    //处理rxjava内存泄漏,基础组件
+    compile 'com.trello:rxlifecycle:0.7.0'
+    compile 'com.trello:rxlifecycle-components:0.7.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.1.0'
+    compile 'org.greenrobot:eventbus:3.0.0'
+    //组件视图绑定依赖
+    compile 'com.jakewharton:butterknife:8.5.1'
+    compile 'com.jakewharton:butterknife-compiler:8.5.1'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    //    compile 'com.squareup.retrofit2:adapter-rxjava2:2.3.0' //RxJava2.0+Retrofit2.0适配依赖
+    //OKHttp3.0依赖
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    //OKHttp优化策略依赖
+    compile 'com.squareup.okhttp3:logging-interceptor:3.9.0'
+    //结果转为基本类型所需依赖
+    compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
+    //dialog
+    compile 'cn.pedant.sweetalert:library:1.3'
+
+}
