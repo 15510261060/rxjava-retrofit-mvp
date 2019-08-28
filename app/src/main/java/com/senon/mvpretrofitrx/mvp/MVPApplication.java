@@ -21,8 +21,7 @@ public class MVPApplication extends ApplicationUtil {
         super.attachBaseContext(base);
         AppInfo.getInstance().init(this);
         MNetWorkingHelper.getInstance().init(this, new RetrofitConfig.Builder()
-            .setBaseUrl(Api.baseUrl).build())
-                .addInterceptor(new HeaderInterceptor())//添加header
+            .setBaseUrl(Api.baseUrl).build()) .addInterceptor(new HeaderInterceptor())//添加header
                 .startUp();
     }
 }
