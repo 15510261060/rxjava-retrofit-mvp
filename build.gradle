@@ -41,13 +41,13 @@ task testGitHooks(type: Copy) {
     from("${rootDir}/git-hooks")
     into("${rootDir}/.git/hooks")
     include '**/*'
-    println("=====================testGitHooks end.=========================")
     def command = "chmod 777  ${rootDir}/.git/hooks/commit-msg "
     try {
         exec {
             executable 'bash'
             args "-c", "$command"
         }
+        println("=====================testGitHooks end.=========================")
     } catch (Exception e) {
         println e.message
     }
