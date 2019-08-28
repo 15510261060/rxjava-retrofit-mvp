@@ -1,5 +1,72 @@
-#!/bin/bash
-# From Gerrit Code Review 2.12.2
+#!/bin/sh
+
+# 检查当前分支名是否与commit message相匹配
+checkCommitMessageMatchBranchName()
+{
+    currentBranchName=`git status -sb | awk '$1 == "##"{print $2}' | awk -F '\\.\\.\\.origin/' '{print $2}' | cut -d '-' -f 2`
+
+    if [ -n "$currentBranchName" ]; then
+        # 本地分支有对应的远程分支，则检查commit message中的分支名是否与远程分支相匹配
+        if egrep -q $currentBranchName $1; then
+            return 0
+        else
+            echo "commit message中分支名与当前分支名不匹配，当前分支为$currentBranchName"
+            return 1
+        fi
+    fi
+}
+
+commit_regex1='(\[Add\]|\[Change\]|\[Remove\]): \[.*\]-\[.*\]'
+commit_regex201='Root cause: '
+commit_regex202='Solution: '
+commit_regex203='Affection: '
+commit_regex204='Bug url: '
+commit_regex3='更新.*分支版本号'
+
+
+error_msg1="
+
+~~~~~
+Commit message 格式检查，有问题请联系   liyang073@ke.com
+Commit message format error.
+Commit message 请选择以下任一格式:
+
+  1. [Add]|[Change]|[Remove]: [版本名称]-[需求名称]描述
+  2. Root cause: 根本原因
+  Solution: 解决办法
+  Affection: 影响范围
+  Bug url: bug链接
+  3. 更新 dev-2.14.0 分支版本号
+
+More information please refer http://git.lianjia.com/luweiyu001/lion/wikis/codereview
+~~~~~
+
+"
+
+if grep -q -i -E "Change-Id" $1 ; then
+    echo "不对amend message检查"
+elif grep -q -i -E "merge" $1 ; then
+    echo "不对merge检查"
+elif grep -q -i -E "revert" $1 ; then
+    echo "不对revert检查"
+elif grep -q -E "$commit_regex1" $1 ; then
+    echo "匹配例子1"
+    checkCommitMessageMatchBranchName $1
+    if [ $? -eq 1 ]; then
+        exit 1
+    fi
+elif grep -q "$commit_regex201" $1 && grep -q "$commit_regex202" $1 && grep -q "$commit_regex203" $1  && grep -q "$commit_regex204" $1 ; then
+    echo "匹配例子2"
+elif grep -q -E "$commit_regex3" $1 ; then
+    echo "匹配例子3"
+else
+    echo "$error_msg1" >&2
+    exit 1
+
+fi
+
+#!/bin/sh
+# From Gerrit Code Review 2.14.6
 #
 # Part of Gerrit Code Review (https://www.gerritcodereview.com/)
 #
@@ -20,104 +87,9 @@
 
 unset GREP_OPTIONS
 
-CHANGE_ID_AFTER="Bug|Issue|Test"
-END="# Everything below will be removed."
+CHANGE_ID_AFTER="Bug|Depends-On|Issue|Test|Feature|Fixes|Fixed"
 MSG="$1"
-STRIP_LINE=""
 
-trim() {
-	local var="$*"
-	# remove leading whitespace characters
-	var="${var#"${var%%[![:space:]]*}"}"
-	# remove trailing whitespace characters
-	var="${var%"${var##*[![:space:]]}"}"
-	#echo -n "$var"
-	STRIP_LINE=$var
-}
-
-print_commit_message() {
-	# Print the original commit message for commit failed
-	echo "####################"
-	echo -e "\033[32moriginal commit message:\033[0m"
-
-	while read line
-	do
-		trim $line
-		line=$STRIP_LINE
-		if [[ ${line} == ${END} ]]; then
-			break
-		fi
-		if [[ ${line:0:1} != "#" ]]; then
-			echo ${line}
-		fi
-	done < "$MSG"
-	echo "###################"
-}
-
-check_type() {
-	# AngularJS Git Commit Message Conventions
-	# https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y
-	# SUBJECT Regex change to end without "." or "。"
-	TYPE="add|fix|rm"
-	#SCOPE：\([^\)]+\)除了)的任何内容，即：可以在()里填写任何用于说明的内容
-	SCOPE="\([^\)]+\)"
-	SUBJECT=".+[^\.|。]$"
-	REGEX="^(${TYPE})(${SCOPE})?: (${SUBJECT})$"
-	IGNORE_TYPE="Merge|Revert"
-	IGNORE_REGEX="^(${IGNORE_TYPE}) "
-
-	i=0
-	max_length=100
-	while read line
-	do
-		trim $line
-		line=$STRIP_LINE
-		if [[ ${line} == ${END} ]]; then
-			break
-		fi
-
-		if [[ ${line:0:1} != "#" ]]; then
-			# Commit Message Max Length
-			if [[ ${#line} -gt ${max_length} ]]; then
-				echo -e "commit message \033[31m \"${line}\" (${#line} chars)\033[0m can not be longer than \033[31m${max_length}\033[0m chars"
-				echo -e "\033[31mcommit failed \033[0m"
-				print_commit_message
-				exit 1
-		  	fi
-
-			if [[ ${i} -eq 0 ]]; then
-				# don't check merge or revert commit
-				if [[ ${line} =~ ${IGNORE_REGEX} ]]; then
-					return
-				fi
-				if [[ ! ${line} =~ ${REGEX} ]]; then
-					echo -e "line 1:\033[31m ${line}\033[0m"
-					echo -e "line 1 should be\033[32m \"add|fix|rm: message\"\033[0m"
-					echo -e "e.g: add: 添加一个文件。 \033[31m(注意：冒号后面要有一个空格) \033[0m"
-					echo -e "\033[31mcommit failed \033[0m"
-					echo -e "更多请参考：http://wiki.lianjia.com/pages/viewpage.action?pageId=424228270"
-					print_commit_message
-					exit 1
-				fi
-			elif [[ ${i} -eq 1 ]]; then
-				#echo "second line"
-				if [[ ${#line} -gt 0 ]]; then
-					echo -e "line 2:\033[31m ${line}\033[0m"
-					echo -e "line 2 should be a\033[32m BLANK \033[0mline"
-					echo -e "\033[31mcommit failed\033[0m"
-					print_commit_message
-					exit 1
-				fi
-			fi
-			arr[${i}]=${line}
-			#echo ${i} ${arr[i]}
-			(( ++i ))
-		fi
-	done < "$MSG"
-}
-
-
-#
 # Check for, and add if missing, a unique Change-Id
 #
 add_ChangeId() {
@@ -134,10 +106,6 @@ add_ChangeId() {
 		return
 	fi
 
-	if test "true" = "`git config --bool --get commit.angularjsFormatCheck`"
-	then
-	        check_type
-	fi
 	# Do not add Change-Id to temp commits
 	if echo "$clean_message" | head -1 | grep -q '^\(fixup\|squash\)!'
 	then
@@ -288,3 +256,6 @@ _gen_ChangeId() {
 
 
 add_ChangeId
+
+
+
