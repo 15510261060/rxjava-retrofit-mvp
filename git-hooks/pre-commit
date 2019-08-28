@@ -1,0 +1,32 @@
+#!/bin/sh
+if git-rev-parse --verify HEAD >/dev/null 2>&1; then
+    against=HEAD
+else
+    against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+ 
+for FILE in `git diff-index --cached --name-status $against -- | cut -c3-` ; do
+
+    #排除对commit-msg和pre-commit的检查
+
+    if grep -q 'commit-msg' $FILE; then
+        continue
+    fi
+
+    if grep -q 'pre-commit' $FILE; then
+        continue
+    fi
+
+    # Check if the file contains 'nocommit'
+    if grep --quiet 'nocommit' $FILE; then
+        echo $FILE ' contains nocommit!'
+        exit 1
+    fi
+
+    # Check if 新增的行有没有 contains 'die'
+    #if git diff $against^ $FILE | grep '+' | grep --quiet 'die'; then
+    #    echo $FILE ' new line contains die!'
+    #    exit 1
+    #fi
+done
+exit
