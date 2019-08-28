@@ -20,7 +20,8 @@ public class MVPApplication extends ApplicationUtil {
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         AppInfo.getInstance().init(this);
-        MNetWorkingHelper.getInstance().init(this, new RetrofitConfig.Builder()
+        MNetWorkingHelper.getInstance()
+            .init(this, new RetrofitConfig.Builder()
             .setBaseUrl(Api.baseUrl).build())
                 .addInterceptor(new HeaderInterceptor())//添加header
                 .startUp();
