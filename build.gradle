@@ -36,9 +36,11 @@ afterEvaluate {
 }
 
 task testGitHooks(type: Copy) {
+    println("=====================testGitHooks beginning.=========================")
     description 'Copies the git hooks from team-props/git-hooks to the .git folder.'
     from("${rootDir}/git-hooks")
     into("${rootDir}/.git/hooks")
     include '**/*'
+    println("=====================testGitHooks end.=========================")
 }
 
