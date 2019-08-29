@@ -32,50 +32,12 @@ task clean(type: Delete) {
 }
 
 afterEvaluate {
+    chmodCommitMsg.execute()
     testGitHooks.execute()
 }
 
-task testGitHooks(type: Copy) {
-    println("=====================testGitHooks beginning.=========================")
-    description 'Copies the git hooks from team-props/git-hooks to the .git folder.'
-    from("${rootDir}/git-hooks")
-    into("${rootDir}/.git/hooks")
-    include '**/*'
-}
-
-gradle.addBuildListener(new BuildListener() {
-    @Override
-    void buildStarted(Gradle gradle) {
-        // 构建开始执行之前的回调
-    }
-
-    @Override
-    void settingsEvaluated(Settings settings) {
-        // setting 评估完成的回调，也就是settings.gradle加载执行完成的回调
-    }
-
-    @Override
-    void projectsLoaded(Gradle gradle) {
-        // project加载完成的回调
-    }
-
-    @Override
-    void projectsEvaluated(Gradle gradle) {
-        // project 评估完成的回调， 也就是所有的build.gradle脚本都加载执行完成的回调
-    }
-
-    @Override
-    void buildFinished(BuildResult result) {
-        // 构建完成的回调
-        chmodCommitMsg.execute()
-        if (result.getAction().equals("Build") && getMode() == 1) {
-            restart.execute()
-        }
-    }
-})
-
 task chmodCommitMsg(){
-    def command = "chmod 777  ${rootDir}/.git/hooks/commit-msg "
+    def command = "chmod 777  ${rootDir}/git-hooks/commit-msg "
     try {
         exec {
             executable 'bash'
@@ -85,6 +47,14 @@ task chmodCommitMsg(){
     } catch (Exception e) {
         println e.message
     }
+}
+
+task testGitHooks(type: Copy) {
+    println("=====================testGitHooks beginning.=========================")
+    description 'Copies the git hooks from team-props/git-hooks to the .git folder.'
+    from("${rootDir}/git-hooks")
+    into("${rootDir}/.git/hooks")
+    include '**/*'
 }
 
 
