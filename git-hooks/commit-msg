@@ -134,6 +134,8 @@ add_ChangeId() {
 		return
 	fi
 
+  check_type
+
 	# Do not add Change-Id to temp commits
 	if echo "$clean_message" | head -1 | grep -q '^\(fixup\|squash\)!'
 	then
